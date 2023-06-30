@@ -5,9 +5,9 @@ import kotlinx.parcelize.Parcelize
 
 @Parcelize
 data class StarShipsResponse(
-    val count: Int,
-    val next: String?,
-    val previous: String?,
+    val count: Int?=null,
+    val next: String?=null,
+    val previous: String?=null,
     val results: List<StarShips>
 ):Parcelable
 @Parcelize

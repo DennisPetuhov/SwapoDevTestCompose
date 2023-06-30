@@ -5,7 +5,7 @@ import androidx.room.Room
 import com.example.swapidevtest.DATA.DB.Constants.PERSON_DATABASE
 import com.example.swapidevtest.DATA.DB.PersonDatabase
 import com.example.swapidevtest.DATA.DB.PersonEntity
-import com.example.ui.DATA.Api.ApiServicePeople
+import com.example.ui.DATA.Api.ApiService
 import com.squareup.moshi.Moshi
 import dagger.Module
 import dagger.Provides
@@ -45,8 +45,8 @@ class MainModule {
 
     @Provides
     @Singleton
-    fun provideApiService(retrofit: Retrofit): ApiServicePeople {
-        return retrofit.create(ApiServicePeople::class.java)
+    fun provideApiService(retrofit: Retrofit): ApiService {
+        return retrofit.create(ApiService::class.java)
     }
 
 

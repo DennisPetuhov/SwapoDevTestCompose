@@ -5,13 +5,22 @@ import androidx.room.Ignore
 import com.squareup.moshi.Json
 import kotlinx.parcelize.Parcelize
 
+//@Parcelize
+//data class PeopleSearchResponse(
+//    val count: Int = null,
+//    val next: String? = null,
+//    val previous: String? = null,
+//    @Json(name = "results")
+//    var people: List<Person>? = null
+//) : Parcelable
+
 @Parcelize
 data class PeopleSearchResponse(
     val count: Int? = null,
     val next: String? = null,
     val previous: String? = null,
     @Json(name = "results")
-    val people: List<Person>? = null
+    var people: List<Person>? = null  // mutableListOf()
 ) : Parcelable
 
 @Parcelize

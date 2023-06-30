@@ -1,5 +1,6 @@
 package com.example.swapodevtestcompose
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -10,13 +11,18 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.swapidevtest.DOMAIN.model.PeopleSearchResponse
+import com.example.swapidevtest.DOMAIN.model.Person
+import com.example.swapidevtest.DOMAIN.model.StarShips
+import com.example.swapidevtest.DOMAIN.model.StarShipsResponse
 import com.example.swapodevtestcompose.ui.theme.SwapoDevTestComposeTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.StateFlow
 
 
 @AndroidEntryPoint
@@ -32,27 +38,42 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Greeting("Android")
+                    People()
                 }
             }
         }
     }
 }
 
+@SuppressLint("SuspiciousIndentation")
 @Composable
 fun People(peopleViewModel: PeopleViewModel = hiltViewModel()) {
 
-    peopleViewModel.getPeopleFromApi()
-    val peopleStateFlow by peopleViewModel.searchPeopleFlow.collectAsState()
-    if (peopleStateFlow.people != null) {
-        LazyColumn {
 
-            items(peopleStateFlow.people) { person -> androidx.compose.material3.Text(text = person.name) }
+    peopleViewModel.getCombineList("s")
+
+    val combineListFlow by peopleViewModel.searchCombineList.collectAsStateWithLifecycle()
+    println("********* combineList" + combineListFlow.toString())
+
+    MultipleObjectsList(combineListFlow = combineListFlow)
 
 
+}
+
+
+@Composable
+fun MultipleObjectsList(combineListFlow: List<Any>) {
+
+    LazyColumn {
+
+        items(combineListFlow) { item ->
+            when (item) {
+                is Person -> Text(text = item.name)
+                is StarShips -> Text(text = item.name)
+
+            }
         }
     }
-
 }
 
 
