@@ -4,18 +4,43 @@ import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.example.swapidevtest.DOMAIN.model.PeopleSearchResponse
 import com.example.swapidevtest.DOMAIN.model.Person
 import com.example.swapidevtest.DOMAIN.model.StarShips
@@ -48,34 +73,136 @@ class MainActivity : ComponentActivity() {
 @SuppressLint("SuspiciousIndentation")
 @Composable
 fun People(peopleViewModel: PeopleViewModel = hiltViewModel()) {
+    Column() {
 
 
-    peopleViewModel.getCombineList("s")
+//    peopleViewModel.getCombineList("s")
+        SearchBar(
+            onSearch = {peopleViewModel.getCombineList(it)}
+        )
 
-    val combineListFlow by peopleViewModel.searchCombineList.collectAsStateWithLifecycle()
-    println("********* combineList" + combineListFlow.toString())
+                Spacer(modifier = Modifier)
 
-    MultipleObjectsList(combineListFlow = combineListFlow)
+        val combineListFlow by peopleViewModel.searchCombineList.collectAsStateWithLifecycle()
+        println("********* combineList" + combineListFlow.toString())
 
 
+        MultipleObjectsList(combineListFlow = combineListFlow){peopleViewModel.getFilms(it as Person)}
+
+    }
 }
 
 
 @Composable
-fun MultipleObjectsList(combineListFlow: List<Any>) {
+fun MultipleObjectsList(combineListFlow: List<Any>, onclick: (Any)->Unit) {
 
     LazyColumn {
 
+
         items(combineListFlow) { item ->
             when (item) {
-                is Person -> Text(text = item.name)
-                is StarShips -> Text(text = item.name)
+                is Person -> Row(
+                    modifier = Modifier.padding(15.dp),
+                    verticalAlignment = Alignment.Top,
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+
+                    Text(
+                        modifier = Modifier
+                            .padding(15.dp)
+                            .weight(1f),
+                        text = item.name
+                    )
+                    Text(
+                        modifier = Modifier
+                            .padding(15.dp)
+                            .weight(1f), text = item.gender
+                    )
+                    Text(
+                        modifier = Modifier
+                            .padding(15.dp)
+                            .weight(1f),
+                        text = item.starships.size.toString()
+                    )
+                    Button(onClick = { onclick(item) }) {
+
+                    }
+                }
+
+                is StarShips -> Row(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+
+                    Text(
+                        modifier = Modifier
+                            .padding(15.dp)
+                            .weight(1f),
+                        text = item.name,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        modifier = Modifier
+                            .padding(15.dp)
+                            .weight(1f),
+                        text = item.model,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        modifier = Modifier
+                            .padding(15.dp)
+                            .weight(1f), text = item.manufacturer,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        modifier = Modifier
+                            .padding(15.dp)
+                            .weight(1f),
+                        text = item.passengers,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
 
             }
         }
+
     }
 }
 
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
+@Composable
+fun SearchBar(onSearch: (String) -> Unit) {
+    var text by remember { mutableStateOf("") }
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
+
+    Row() {
+
+
+        TextField(
+            value = text,
+            onValueChange = {
+                text = it
+                if (it.length > 1) {
+                    onSearch(it)
+
+                }
+            },
+            label = { Text("Search") },
+            leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            keyboardActions = KeyboardActions(onSearch = {
+                onSearch(text)
+                // Hide the keyboard after submitting the search
+                keyboardController?.hide()
+                //or hide keyboard
+                focusManager.clearFocus()
+
+            })
+        )
+    }
+}
 
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {

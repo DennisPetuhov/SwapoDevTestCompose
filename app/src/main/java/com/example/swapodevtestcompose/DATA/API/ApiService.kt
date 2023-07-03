@@ -1,8 +1,10 @@
 package com.example.ui.DATA.Api
 
+import com.example.swapidevtest.DOMAIN.model.FilmResponse
 import com.example.swapidevtest.DOMAIN.model.PeopleSearchResponse
 import com.example.swapidevtest.DOMAIN.model.StarShipsResponse
 import retrofit2.http.GET
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 
@@ -21,6 +23,9 @@ suspend fun getPeopleSearch(
     @GET("starships")
     suspend fun getStarhipsSearch(
         @Query ("search") qwerty :String?): StarShipsResponse
+
+    @GET("films/{id}/")
+    suspend fun  getFilm(@Path ("id")  id:String ):FilmResponse
 
 
 //    @GET("/posts")

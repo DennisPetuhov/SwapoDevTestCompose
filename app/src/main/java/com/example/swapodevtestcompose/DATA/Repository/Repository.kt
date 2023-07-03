@@ -3,6 +3,7 @@ package com.example.swapidevtest.DATA.Repository
 import android.util.Log
 import com.example.swapidevtest.DATA.DB.PersonDao
 import com.example.swapidevtest.DATA.DB.PersonEntity
+import com.example.swapidevtest.DOMAIN.model.FilmResponse
 import com.example.swapidevtest.DOMAIN.model.PeopleSearchResponse
 import com.example.swapidevtest.DOMAIN.model.Person
 import com.example.swapidevtest.DOMAIN.model.StarShips
@@ -33,30 +34,33 @@ class Repository @Inject constructor(
 
     }
 
+    suspend fun getFilm(id: String): FilmResponse {
+        return apiService.getFilm(id)
+
+    }
+
 
 //    suspend fun searchPeopleAndStarshipsInInternet(query: String?): Flow<List<Any>>
 
-        suspend fun searchPeopleInInternet(qwerty: String) = flow<List<Person>> {
-            val response = apiService.getPeopleSearch(qwerty)
+    suspend fun searchPeopleInInternet(qwerty: String) = flow<List<Person>> {
+        val response = apiService.getPeopleSearch(qwerty)
 //            println("*response"+ response.toString())
-            response.people?.let {
+        response.people?.let {
 
 //                println("****** PERSON LIST"+ it)
-                emit(it)
-            }
-        }.flowOn(Dispatchers.IO)
+            emit(it)
+        }
+    }.flowOn(Dispatchers.IO)
 
-        fun searchStarshipsInInternet(qwerty:String) = flow<List<StarShips>> {
-            val response = apiService.getStarhipsSearch(qwerty)
+    fun searchStarshipsInInternet(qwerty: String) = flow<List<StarShips>> {
+        val response = apiService.getStarhipsSearch(qwerty)
 
-            response.let {
+        response.let {
 //                println("****** STARSHIP LIST" + it)
-                emit(it.results)
-            }
+            emit(it.results)
+        }
 
-        }.flowOn(Dispatchers.IO)
-
-
+    }.flowOn(Dispatchers.IO)
 
 
     suspend fun getPeopleFromInternetInStateFlow(

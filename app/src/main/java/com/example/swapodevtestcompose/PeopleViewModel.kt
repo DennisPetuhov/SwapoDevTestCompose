@@ -3,6 +3,7 @@ package com.example.swapodevtestcompose
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.swapidevtest.DATA.Repository.Repository
+import com.example.swapidevtest.DOMAIN.model.FilmResponse
 import com.example.swapidevtest.DOMAIN.model.PeopleSearchResponse
 import com.example.swapidevtest.DOMAIN.model.Person
 import com.example.swapidevtest.DOMAIN.model.StarShips
@@ -58,6 +59,25 @@ class PeopleViewModel @Inject constructor(
         }
     }
 
+    fun getFilms(entity: Person) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val list = mutableListOf<FilmResponse>()
+            for (film in entity.films) {
+
+                val id = film.filter {
+                    it.isDigit()
+                }
+                val film=repository.getFilm(id)
+                list.add(film)
+            }
+            println("@@@"+list[0].title.toString())
+
+
+        }
+
+    }
+//    fun addListOfFilmsToEntity(list: MutableList<FilmResponse>)
+
     fun getPeopleFromApi(qwerty: String) {
         viewModelScope.launch(Dispatchers.IO) {
             repository.searchPeopleInInternet(qwerty)
@@ -79,20 +99,6 @@ class PeopleViewModel @Inject constructor(
                 }
         }
     }
-
-
-    //    val state: StateFlow<State> = backendMessages.stateIn(scope, SharingStarted.Eagerly, State.LOADING)
-
-
-//    fun getPeopleFromApiInAStateScope() {
-//        viewModelScope.launch(Dispatchers.IO) {
-//            repository.getPeopleFromInternetInStateFlow(viewModelScope, "s").collect {
-//                it?.let {
-//                    _searchPeople.value = it
-//                }
-//            }
-//        }
-//    }
 
 
 }
