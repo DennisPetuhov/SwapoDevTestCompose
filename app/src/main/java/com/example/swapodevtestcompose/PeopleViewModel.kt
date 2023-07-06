@@ -2,20 +2,24 @@ package com.example.swapodevtestcompose
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.swapidevtest.DATA.DB.PersonEntity
+import com.example.swapidevtest.DATA.DB.personToPersonEntity
 import com.example.swapidevtest.DATA.Repository.Repository
 import com.example.swapidevtest.DOMAIN.model.FilmResponse
-import com.example.swapidevtest.DOMAIN.model.PeopleSearchResponse
 import com.example.swapidevtest.DOMAIN.model.Person
 import com.example.swapidevtest.DOMAIN.model.StarShips
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.zip
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 @HiltViewModel
@@ -59,24 +63,64 @@ class PeopleViewModel @Inject constructor(
         }
     }
 
-    fun getFilms(entity: Person) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val list = mutableListOf<FilmResponse>()
-            for (film in entity.films) {
 
-                val id = film.filter {
-                    it.isDigit()
-                }
-                val film=repository.getFilm(id)
+    fun getFilmsByList(listOfFilms: MutableList<String>): MutableList<FilmResponse> {
+        val list = mutableListOf<FilmResponse>()
+
+        runBlocking {
+            val deferredList = mutableListOf<Deferred<FilmResponse>>()
+
+            for (film in listOfFilms) {
+                val id = film.filter { it.isDigit() }
+                val deferredFilm = async { repository.getFilm(id) }
+                deferredList.add(deferredFilm)
+            }
+
+            deferredList.awaitAll()
+
+            for (deferredFilm in deferredList) {
+                val film = deferredFilm.await()
                 list.add(film)
             }
-            println("@@@"+list[0].title.toString())
-
-
         }
 
+        println("8888 $list")
+        return list
     }
-//    fun addListOfFilmsToEntity(list: MutableList<FilmResponse>)
+
+
+
+
+
+
+    fun addListOfFilmsToEntity(
+        listOfFilmResponse: MutableList<String>,
+        entity: Person
+    ): Person {
+        val list = mutableListOf<String>()
+        for (film in listOfFilmResponse) {
+            list.add(film)
+        }
+
+//        entity.films = list
+        val person = Person(
+            name = entity.name,
+            starships = entity.starships,
+            gender = entity.gender,
+            films = list,
+            homeworld = entity.homeworld
+        )
+        return person
+
+    }
+
+    fun putPersonInDB(list:List<String>,entity: Person,) {
+        val person = addListOfFilmsToEntity(list as MutableList<String>, entity)
+
+
+        repository.saveNote(PersonEntity().personToPersonEntity(person))
+        println(person.toString())
+    }
 
     fun getPeopleFromApi(qwerty: String) {
         viewModelScope.launch(Dispatchers.IO) {

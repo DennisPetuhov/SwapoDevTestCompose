@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,7 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -26,9 +27,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -40,14 +43,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.recyclerview.widget.RecyclerView.ViewHolder
-import com.example.swapidevtest.DOMAIN.model.PeopleSearchResponse
 import com.example.swapidevtest.DOMAIN.model.Person
 import com.example.swapidevtest.DOMAIN.model.StarShips
-import com.example.swapidevtest.DOMAIN.model.StarShipsResponse
 import com.example.swapodevtestcompose.ui.theme.SwapoDevTestComposeTheme
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.StateFlow
 
 
 @AndroidEntryPoint
@@ -73,61 +72,59 @@ class MainActivity : ComponentActivity() {
 @SuppressLint("SuspiciousIndentation")
 @Composable
 fun People(peopleViewModel: PeopleViewModel = hiltViewModel()) {
+
+
+    val expandedState = remember { mutableStateListOf<Boolean>() }
     Column() {
 
 
-//    peopleViewModel.getCombineList("s")
         SearchBar(
-            onSearch = {peopleViewModel.getCombineList(it)}
+            onSearch = { peopleViewModel.getCombineList(it) }
         )
 
-                Spacer(modifier = Modifier)
+        Spacer(modifier = Modifier)
 
         val combineListFlow by peopleViewModel.searchCombineList.collectAsStateWithLifecycle()
         println("********* combineList" + combineListFlow.toString())
 
 
-        MultipleObjectsList(combineListFlow = combineListFlow){peopleViewModel.getFilms(it as Person)}
+        MultipleObjectsList(
+            combineListFlow = combineListFlow,
+            peopleViewModel,
+            expandedState
+        ) { person, list ->
+            peopleViewModel.putPersonInDB(entity = person as Person, list = list)
+        }
 
     }
 }
 
 
 @Composable
-fun MultipleObjectsList(combineListFlow: List<Any>, onclick: (Any)->Unit) {
+fun MultipleObjectsList(
+    combineListFlow: List<Any>,
+    peopleViewModel: PeopleViewModel,
+    expandedState: SnapshotStateList<Boolean>,
+    onclick: (Any, List<String>) -> Unit
+) {
+
+    combineListFlow.forEach { alementOfList ->
+        expandedState.add(false)
+
+    }
 
     LazyColumn {
 
 
-        items(combineListFlow) { item ->
+        itemsIndexed(combineListFlow) { index, item ->
             when (item) {
-                is Person -> Row(
-                    modifier = Modifier.padding(15.dp),
-                    verticalAlignment = Alignment.Top,
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-
-                    Text(
-                        modifier = Modifier
-                            .padding(15.dp)
-                            .weight(1f),
-                        text = item.name
-                    )
-                    Text(
-                        modifier = Modifier
-                            .padding(15.dp)
-                            .weight(1f), text = item.gender
-                    )
-                    Text(
-                        modifier = Modifier
-                            .padding(15.dp)
-                            .weight(1f),
-                        text = item.starships.size.toString()
-                    )
-                    Button(onClick = { onclick(item) }) {
-
-                    }
-                }
+                is Person -> CreateOneElementofLazyColumn(
+                    index = index,
+                    item = item,
+                    expandedState = expandedState,
+                    peopleViewModel,
+                    onclick
+                )
 
                 is StarShips -> Row(
                     modifier = Modifier.fillMaxSize(),
@@ -169,6 +166,71 @@ fun MultipleObjectsList(combineListFlow: List<Any>, onclick: (Any)->Unit) {
     }
 }
 
+@Composable
+fun CreateOneElementofLazyColumn(
+    index: Int,
+    item: Person,
+    expandedState: SnapshotStateList<Boolean>,
+    peopleViewModel: PeopleViewModel,
+    onclick: (Any, MutableList<String>) -> Unit
+) {
+    val listOfFilmResponse =
+        peopleViewModel.getFilmsByList(item.films.toList() as MutableList<String>)
+    val listOfFilms = mutableListOf<String>()
+    for (film in listOfFilmResponse) {
+        listOfFilms.add(film.title)
+    }
+
+    Row(
+        modifier = Modifier.padding(15.dp),
+        verticalAlignment = Alignment.Top,
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+
+
+        Row(modifier = Modifier.clickable {
+            expandedState[index] = !expandedState[index]
+
+        }) {
+            Text(
+                modifier = Modifier
+                    .padding(15.dp)
+                    .weight(1f),
+                text = item.name
+            )
+            Text(
+                modifier = Modifier
+                    .padding(15.dp)
+                    .weight(1f), text = item.gender
+            )
+            Text(
+                modifier = Modifier
+                    .padding(15.dp)
+                    .weight(1f),
+                text = item.starships.size.toString()
+            )
+//
+            Button(onClick = {
+                onclick(item, listOfFilms)
+            }) {
+
+            }
+
+            if (expandedState[index]) {
+                Column(modifier = Modifier.padding(start = 16.dp)) {
+                    for (film in listOfFilmResponse) {
+                        Text(text = film.title)
+                    }
+
+                }
+            }
+
+        }
+
+    }
+
+}
+
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun SearchBar(onSearch: (String) -> Unit) {
@@ -177,8 +239,6 @@ fun SearchBar(onSearch: (String) -> Unit) {
     val focusManager = LocalFocusManager.current
 
     Row() {
-
-
         TextField(
             value = text,
             onValueChange = {

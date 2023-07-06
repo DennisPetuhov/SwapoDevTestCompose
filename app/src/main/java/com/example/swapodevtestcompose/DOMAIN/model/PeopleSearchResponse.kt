@@ -2,6 +2,8 @@ package com.example.swapidevtest.DOMAIN.model
 
 import android.os.Parcelable
 import androidx.room.Ignore
+import com.example.swapidevtest.DATA.DB.PersonEntity
+import com.example.swapidevtest.DATA.DB.personToPersonEntity
 import com.squareup.moshi.Json
 import kotlinx.parcelize.Parcelize
 
@@ -28,7 +30,7 @@ data class Person(
     val name: String,
     val starships: List<String>,
     val gender: String,
-    val films: List<String>,
+    var films: List<String>,
     val homeworld: String,
 
-) : Parcelable
+    ) : Parcelable
