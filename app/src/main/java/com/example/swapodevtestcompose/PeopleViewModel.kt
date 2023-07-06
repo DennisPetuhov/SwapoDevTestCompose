@@ -28,8 +28,8 @@ class PeopleViewModel @Inject constructor(
 ) : ViewModel() {
 
 
-    val searchPeopleFlow: StateFlow<List<Person>> get() = _searchPeople
-    private var _searchPeople: MutableStateFlow<List<Person>> =
+    val searchPeopleEntityFlow: StateFlow<List<PersonEntity>> get() = _searchPeopleEntity
+    private var _searchPeopleEntity: MutableStateFlow<List<PersonEntity>> =
         MutableStateFlow(listOf())
 
 
@@ -40,6 +40,14 @@ class PeopleViewModel @Inject constructor(
     val searchCombineList: StateFlow<List<Any>> get() = _searchCombineList
     private var _searchCombineList: MutableStateFlow<List<Any>> =
         MutableStateFlow(listOf())
+
+    fun getListPersonLiked() {
+        viewModelScope.launch {
+            repository.getAllPeopleFromDB().collect {
+                _searchPeopleEntity.value = it
+            }
+        }
+    }
 
     fun getCombineList(qwerty: String) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -89,10 +97,6 @@ class PeopleViewModel @Inject constructor(
     }
 
 
-
-
-
-
     fun addListOfFilmsToEntity(
         listOfFilmResponse: MutableList<String>,
         entity: Person
@@ -114,7 +118,7 @@ class PeopleViewModel @Inject constructor(
 
     }
 
-    fun putPersonInDB(list:List<String>,entity: Person,) {
+    fun putPersonInDB(list: List<String>, entity: Person) {
         val person = addListOfFilmsToEntity(list as MutableList<String>, entity)
 
 
@@ -122,16 +126,16 @@ class PeopleViewModel @Inject constructor(
         println(person.toString())
     }
 
-    fun getPeopleFromApi(qwerty: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            repository.searchPeopleInInternet(qwerty)
-                .collect {
-                    it.let {
-                        _searchPeople.value = it
-                    }
-                }
-        }
-    }
+//    fun getPeopleFromApi(qwerty: String) {
+//        viewModelScope.launch(Dispatchers.IO) {
+//            repository.searchPeopleInInternet(qwerty)
+//                .collect {
+//                    it.let {
+//                        _searchPeople.value = it
+//                    }
+//                }
+//        }
+//    }
 
     fun getStarShipsFromApi(qwerty: String) {
         viewModelScope.launch(Dispatchers.IO) {

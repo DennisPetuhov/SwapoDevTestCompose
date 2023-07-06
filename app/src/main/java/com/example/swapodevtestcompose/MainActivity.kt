@@ -83,10 +83,11 @@ fun People(peopleViewModel: PeopleViewModel = hiltViewModel()) {
         )
 
         Spacer(modifier = Modifier)
+        Button(onClick = { /*TODO*/ }) {
+            
+        }
 
         val combineListFlow by peopleViewModel.searchCombineList.collectAsStateWithLifecycle()
-        println("********* combineList" + combineListFlow.toString())
-
 
         MultipleObjectsList(
             combineListFlow = combineListFlow,
